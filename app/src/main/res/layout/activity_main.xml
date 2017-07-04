@@ -26,5 +26,31 @@
         android:onClick="onClick"
         android:id="@+id/audio_play"/>
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="media record start"
+        android:layout_margin="10dp"
+        android:onClick="onClick"
+        android:id="@+id/media_recorder"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="media record stop"
+        android:layout_margin="10dp"
+        android:onClick="onClick"
+        android:visibility="gone"
+        android:id="@+id/media_recorder_stop"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="media record play"
+        android:layout_margin="10dp"
+        android:onClick="onClick"
+        android:id="@+id/media_play"/>
+
 
 </LinearLayout>
