@@ -1,6 +1,7 @@
 package cn.sintoon.audiodemo;
 
 import android.Manifest;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import cn.sintoon.audiodemo.utils.AudioPlayer;
 import cn.sintoon.audiodemo.utils.AudioRecordManager;
+import cn.sintoon.audiodemo.utils.MediaPlayerHelper;
 import cn.sintoon.audiodemo.utils.MediaRecorderHelper;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -30,7 +32,8 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
     Button mAudioPlay;
     Button mMediaRecorder;
     Button mMediaRecorderStop;
-
+    Button mMediaPlay;
+    private String mediaPath;
 
     private String folder = Environment.getExternalStorageDirectory().getPath() + "/" + "audioDemo";
 
@@ -42,8 +45,10 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         mAudioPlay = (Button) findViewById(R.id.audio_play);
         mMediaRecorder = (Button) findViewById(R.id.media_recorder);
         mMediaRecorderStop = (Button) findViewById(R.id.media_recorder_stop);
+        mMediaPlay = (Button) findViewById(R.id.media_play);
 
         MediaRecorderHelper.getInstance().setRecorderListener(recorderListener);
+        MediaPlayerHelper.getInstance().setPlayListener(playListener);
         boolean b = EasyPermissions.hasPermissions(this, permissions);
         File mkdir = new File(folder);
         if (!mkdir.exists()) {
@@ -63,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
         String path = folder + "/" + name;
         String mediaName = "media.amr";
         String meidaPath = folder + "/" + mediaName;
+        this.mediaPath = meidaPath;
         int state = MediaRecorderHelper.getInstance().getState();
         switch (view.getId()) {
             case R.id.audio_record:
@@ -107,13 +113,77 @@ public class MainActivity extends AppCompatActivity implements EasyPermissions.P
                 mMediaRecorder.setText("media recorder start");
                 MediaRecorderHelper.getInstance().stopRecorder();
                 break;
+            case R.id.media_play:
+                play = MediaPlayerHelper.getInstance().isPlay();
+                if (play){
+                    MediaPlayerHelper.getInstance().stopPlay();
+                    mMediaPlay.setText("media start");
+                }else{
+                   AudioManager am= (AudioManager) getSystemService(AUDIO_SERVICE);
+                    int audioFocus = am.requestAudioFocus(onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                    if (audioFocus == AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
+                        MediaPlayerHelper.getInstance().startPlay(mediaPath);
+                        mMediaPlay.setText("media stop");
+                    }else{
+                        Log.e("startPlay","没有请求到音频焦点");
+                        Toast.makeText(this,"没有请求到音频焦点",Toast.LENGTH_LONG);
+                    }
+                }
+                break;
         }
     }
+
+    private AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            // TODO: 2017/7/5 失去音频焦点后的的处理
+            switch (focusChange){
+                case AudioManager.AUDIOFOCUS_LOSS:
+                    MediaPlayerHelper.getInstance().stopPlay();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    MediaPlayerHelper.getInstance().pausePlay();
+                    break;
+                case AudioManager.AUDIOFOCUS_GAIN:
+                    MediaPlayerHelper.getInstance().resumePlay();
+                    break;
+            }
+
+        }
+    };
+
+    private MediaPlayerHelper.MediaPlayListener playListener = new MediaPlayerHelper.MediaPlayListener() {
+        @Override
+        public void onError(String msg) {
+            Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        public void onStartPre() {
+            Log.e("开始准备","");
+            Toast.makeText(MainActivity.this,"开始准备",Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        public void onStart() {
+            Log.e("开始播放","");
+            Toast.makeText(MainActivity.this,"开始播放",Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        public void onCompletion() {
+            Log.e("播放完毕","");
+            mMediaPlay.setText("media start");
+            Toast.makeText(MainActivity.this,"播放完毕",Toast.LENGTH_LONG).show();
+            AudioManager am= (AudioManager) getSystemService(AUDIO_SERVICE);
+            am.abandonAudioFocus(onAudioFocusChangeListener);
+        }
+    };
 
     private MediaRecorderHelper.RecorderListener recorderListener = new MediaRecorderHelper.RecorderListener() {
         @Override
         public void onError(String message) {
-            Log.e("onError",message);
+            Log.e("onError", message);
             Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
         }
 
