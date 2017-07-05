@@ -16,3 +16,11 @@ Android 多媒体Demo
 > 利用 文件合并，去掉头文件的方式 实现了 暂停录音 ，
 
 > 输出的格式为 amr格式
+
+## MediaPlayer
+
+> 播放录音
+
+## AudioTrack
+
+> 播放录音
